@@ -1,0 +1,23 @@
+{
+  "name": "sws",
+  "version": "0.1.0",
+  "description": "Simple Web Server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gessinger-hj/sws.git"
+  },
+  "author": "Hans-Jürgen Gessinger",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/gessinger-hj/sws/issues"
+  },
+  "homepage": "https://github.com/gessinger-hj/sws#readme",
+  "dependencies": {
+    "express": "^4.13.4",
+    "jsonwebtoken": "^5.7.0"
+  }
+}
