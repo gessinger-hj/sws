@@ -34,7 +34,7 @@
       	<attribute name="Build-Time" value="${build.time}"/>
         <attribute name="Implementation-Title" value="Example"/>
         <attribute name="Implementation-Version" value="${version} ${TODAY}"/>
-        <attribute name="Implementation-Vendor" value="Hans- Jürgen Gessinger"/>
+        <attribute name="Implementation-Vendor" value="Hans-Jürgen Gessinger"/>
       </manifest>
     </jar>
   </target>

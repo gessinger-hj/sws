@@ -2,7 +2,7 @@
 * @Author: Hans Jürgen Gessinger
 * @Date:   2016-04-11 23:10:06
 * @Last Modified by:   Hans Jürgen Gessinger
-* @Last Modified time: 2016-04-11 23:30:40
+* @Last Modified time: 2016-04-13 23:23:11
 */
 
 package org.gessinger.sws.test ;
@@ -13,6 +13,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.Headers ;
 
 public class OkHttpPost
 {
@@ -28,10 +29,14 @@ public class OkHttpPost
         .post(body)
         .build();
     Response response = client.newCall(request).execute();
+    Headers headers = response.headers() ;
+    System.out.println ( headers );
     return response.body().string();
   }
 
   String bowlingJson(String player1, String player2) {
+    // Event e = new Event ( "login" ) ;
+    // User u = new User
     return "{\"winCondition\":\"HIGH_SCORE\","
         + "\"name\":\"Bowling\","
         + "\"round\":4,"
