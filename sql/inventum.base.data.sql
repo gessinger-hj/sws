@@ -1,9 +1,25 @@
-INSERT INTO t_inventory (inventory_name, description, staff_number, person_first_name, person_last_name, miscellaneous)
-VALUES ( 'Microsoft Office', 'AAA xhaFUhXS /view?usp=sharing 32 bit', '01001', 'Dietmar', 'Kauer', 'other 1' ) ;
-INSERT INTO t_inventory (inventory_name, description, staff_number, person_first_name, person_last_name, miscellaneous)
-VALUES ( 'Microsoft Office', 'BBB xhaFUhXS /view?usp=sharing 33 bit', '01001', 'Dietmar', 'Kauer', 'other 2' ) ;
-INSERT INTO t_inventory (inventory_name, description, staff_number, person_first_name, person_last_name, miscellaneous)
-VALUES ( 'Microsoft Office', 'CCC xhaFUhXS /view?usp=sharing 34 bit', '01001', 'Dietmar', 'Kauer', 'other 3' ) ;
-INSERT INTO t_inventory (inventory_name, description, staff_number, person_first_name, person_last_name, miscellaneous)
-VALUES ( 'Microsoft Office', 'DDDxhaFUhXS /view?usp=sharing 35 bit', '01001', 'Dietmar', 'Kauer', 'other 4' ) ;
+INSERT INTO t_inventory (inventory_name, description, identity_key, miscellaneous, operator_modified)
+VALUES ( '1 Microsoft Office', 'AAA xhaFUhXS /view?usp=sharing 32 bit'
+	, ( select IDENTITY_KEY from t_identity where IDENTITY_NAME='dk' )
+	, 'owner: dk'
+	, ( select IDENTITY_KEY from t_identity where IDENTITY_NAME='gess' )
+	 ) ;
+INSERT INTO t_inventory (inventory_name, description, identity_key, miscellaneous, operator_modified)
+VALUES ( '2 Microsoft Office', 'BBB xhaFUhXS /view?usp=sharing 33 bit'
+	, ( select IDENTITY_KEY from t_identity where IDENTITY_NAME='dk' )
+, 'owner: dk'
+	, ( select IDENTITY_KEY from t_identity where IDENTITY_NAME='gess' )
+ ) ;
+INSERT INTO t_inventory (inventory_name, description, identity_key, miscellaneous, operator_modified)
+VALUES ( '3 Microsoft Office', 'CCC xhaFUhXS /view?usp=sharing 34 bit'
+	, ( select IDENTITY_KEY from t_identity where IDENTITY_NAME='bu' )
+, 'owner: bu'
+	, ( select IDENTITY_KEY from t_identity where IDENTITY_NAME='gess' )
+ ) ;
+INSERT INTO t_inventory (inventory_name, description, identity_key, miscellaneous, operator_modified)
+VALUES ( '4 Microsoft Office', 'DDDxhaFUhXS /view?usp=sharing 35 bit'
+	, ( select IDENTITY_KEY from t_identity where IDENTITY_NAME='gess' )
+, 'owner: gess'
+	, ( select IDENTITY_KEY from t_identity where IDENTITY_NAME='gess' )
+ ) ;
 

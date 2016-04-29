@@ -2,7 +2,7 @@
 * @Author: Hans Jürgen Gessinger
 * @Date:   2016-04-11 23:10:06
 * @Last Modified by:   Hans Jürgen Gessinger
-* @Last Modified time: 2016-04-18 15:54:38
+* @Last Modified time: 2016-04-30 00:17:29
 */
 
 package org.gessinger.sws ;
@@ -39,14 +39,14 @@ public class ConnectionProxy
     Request.Builder rb = new Request.Builder() ;
     if ( jwt != null )
     {
-      rb.addHeader ( "Authorization-Token", jwt.getToken() ) ;
+      rb.addHeader ( "x-auth-token", jwt.getToken() ) ;
     }
     Request request = rb.url(uri)
                       .post(body)
                       .build()
                       ;
     Response response = client.newCall(request).execute();
-    String token = response.header ( "Authorization-Token" ) ;
+    String token = response.header ( "x-auth-token" ) ;
     if ( token != null )
     {
       jwt = new JWT ( token ) ;
@@ -80,19 +80,20 @@ public class ConnectionProxy
   public static void main(String[] args)
   {
     Util.argsToProperties ( args ) ;
-    String uid = Util.getProperty ( "uid", "Miller" ) ;
+    String uid = Util.getProperty ( "uid", "dk" ) ;
     String pwd = Util.getProperty ( "pwd", "654321" ) ;
     try
     {
-      ConnectionProxy cp = new ConnectionProxy ( "http://localhost:3000" ) ;
+      ConnectionProxy cp = new ConnectionProxy ( "http://roma:3000" ) ;
       Event e = cp.login ( uid, pwd ) ;
       System.out.println(e);
       Event e_request_select_inventory = new Event ( "DB:REQUEST" ) ;
-      e_request_select_inventory.putValue ( "REQUEST/select/table", "t_inventory" ) ;
-      e_request_select_inventory.putValue ( "REQUEST/select/columns", new String[] { "*" } ) ;
+      e_request_select_inventory.putValue ( "REQUEST/action", "select" ) ;
+      e_request_select_inventory.putValue ( "REQUEST/table", "t_inventory" ) ;
+      e_request_select_inventory.putValue ( "REQUEST/columns", new String[] { "*" } ) ;
       Event e_result_select_inventory = cp.post ( e_request_select_inventory ) ;
 System.out.println ( e_result_select_inventory );
-      ArrayList<Map<String,Object>> rows = (ArrayList<Map<String,Object>>) e_result_select_inventory.getValue ( "RESULT" ) ;
+      ArrayList<Map<String,Object>> rows = (ArrayList<Map<String,Object>>) e_result_select_inventory.getValue ( "RESULT/result" ) ;
       System.out.println (  Util.toString ( rows ) ) ;
     }
     catch ( Throwable exc )

@@ -4,13 +4,15 @@
 * @Author: Hans Jürgen Gessinger
 * @Date:   2016-04-11 23:04:24
 * @Last Modified by:   Hans Jürgen Gessinger
-* @Last Modified time: 2016-04-22 18:48:22
+* @Last Modified time: 2016-04-29 23:59:45
 */
 
 'use strict';
 
 var gepard     = require ( "gepard" ) ;
 var sidds      = require ( "sidds" ) ;
+var DbRequest  = sidds.DbRequest ;
+var DbResult   = sidds.DbResult ;
 var HttpStatus = require ( "http-status" ) ;
 var JSAcc      = gepard.JSAcc ;
 var Log        = gepard.LogFile;
@@ -24,41 +26,31 @@ var privateKey = fs.readFileSync ( privateKeyFileName ) ;
 var publicKey = fs.readFileSync ( publicKeyFileName ) ;
 
 
-var dburl = gepard.getProperty ( "dburl", "mysql://root:luap1997@localhost/sidds" ) ;
+var dburl = gepard.getProperty ( "dburl", "mysql://root:luap1997@localhost/inventum" ) ;
 var userDB = new sidds.UserDB ( dburl ) ;
 var db = new sidds.Database ( dburl ) ;
+let conf = {
+  operations: {
+    "t_inventory": {
+      "immutableColumns":
+      { "operator_modified":true
+      , "created_at":true
+      , "last_modified":true
+      , "inventory_key":true
+      }
+    , "select_table": "v_inventory"
+    , "update_table": "t_inventory"
+    , "delete_table": "t_inventory"
+    }
+  }
+} ;
+db.setConfig ( conf ) ;
 
 var express = require('express') ;
 var jwt = require('jsonwebtoken');
 
 Log.init ( "level=info,Xedirect=3,file=%GEPARD_LOG%/%APPNAME%.log:max=1m:v=4") ;
 accessLog.init ( "file=%GEPARD_LOG%/%APPNAME%.access-%DATE%.log" ) ;
-
-var eee = { className: 'Event',
-  name: 'login',
-  type: '',
-  user: 
-   { className: 'User',
-     id: 'miller',
-     key: 7,
-     _pwd: '',
-     rights: 
-      { CAN_EDIT_USER: 'true',
-        CAN_PURCHASE_PRODUCTS: 'true',
-        CAN_PURCHASE_GOLD_CARD: 'true' },
-     groups: 
-      { keys: { AdminGroup: 3, CustomerGroup: 5, KeyAccountCustomerGroup: 6 },
-        rights: 
-         { AdminGroup: { CAN_EDIT_USER: 'true' },
-           CustomerGroup: { CAN_PURCHASE_PRODUCTS: 'true' },
-           KeyAccountCustomerGroup: { CAN_PURCHASE_GOLD_CARD: 'true' } } },
-     context: '*' },
-  control: 
-   { createdAt: 'Wed Apr 20 2016 17:34:33 GMT+0200 (CEST)',
-     plang: 'Java',
-     status: { code: 0, name: 'success', reason: 'verified' } },
-  body: {},
-  targetIsLocalHost: false } ;
 
 var app = express()
 
@@ -72,28 +64,6 @@ app.get ( '/', (req, res) =>
   res.set (  'Content-Type', 'application/json' ) ;
   res.json ( { Hello: 'World' } ) ;
 }) ;
-app.post ( '/json_test', (req, res) =>
-{
-  res.set ({
-    'Content-Type': 'application/json'
-  }) ;
-  var buf = new Buffer('') ;
-  req.on ( 'data', chunk => { buf = Buffer.concat ( [ buf, chunk ] ) } ) ;
-  req.on ( 'end', function()
-  {
-    var body = buf.toString ( 'utf8' ) ;
-    console.log ( body ) ;
-    console.log ( req.headers ) ;
-    res.status ( HttpStatus.OK ) ;
-    res.set (  'Content-Type', 'application/json' ) ;
-    jwt.sign ( eee.user, privateKey, { algorithm: 'RS256', expiresIn: '2 days'}, token => {
-        res.set (  'Content-Type', 'application/json' ) ;
-        res.set (  'x-auth-token', token ) ;
-        res.status ( HttpStatus.OK ) ;
-        res.json ( eee ) ;
-      });
-  }) ;
-}) ;
 app.post ( '/', ( req, res) =>
 {
   var buf = new Buffer('') ;
@@ -103,6 +73,7 @@ app.post ( '/', ( req, res) =>
     var body = buf.toString ( 'utf8' ) ;
     var e = gepard.Event.prototype.deserialize ( body ) ;
     var t = req.header ( "x-auth-token" ) ;
+    gepard.log ( e ) ;
     {
     // jwt.verify ( t, publicKey, { algorithm: 'RS256' }, ( err, decoded ) => {
     //   if ( err )
@@ -115,54 +86,45 @@ app.post ( '/', ( req, res) =>
     //     return ;
     //   }
       var topic = e.getName() ;
-      var u = e.getUser() ;
-      let joe = new JSAcc ( e.getBody() ) ;
+      var u     = e.getUser() ;
+      let joe   = new JSAcc ( e.getBody() ) ;
       if ( topic === "DB:REQUEST" )
       {
-        var select = joe.value ( "REQUEST/select" ) ;
-      }
-      db.getConnection ( function ( err, connection )
-      {
-        if ( err )
+        let request = e.getValue ( "REQUEST" ) ;
+        if ( ! request )
         {
+          let err = "Missing body.request dataset" ;
           Log.log ( err ) ;
-          e.setStatus ( HttpStatus.INTERNAL_SERVER_ERROR, "error", String ( err ) ) ;
-          res.status ( HttpStatus.INTERNAL_SERVER_ERROR ) ;
+          e.setStatus ( HttpStatus.BAD_REQUEST, "error", String ( err ) ) ;
+          res.status ( HttpStatus.BAD_REQUEST ) ;
           res.set (  'Content-Type', 'application/json' ) ;
           res.send ( e.serialize() ) ;
           return ;
         }
-        var sql = "select * from t_inventory"; 
-        this.select ( sql, function ( err, rows )
-        {
-          if ( err )
+        db.executeRequest ( new DbRequest ( request ), ( result ) => {
+          if ( result.error )
           {
-            Log.error ( "" + err + " in \n" + sql ) ;
-            e.setStatus ( HttpStatus.INTERNAL_SERVER_ERROR, "error", "" + err ) ;
-            this.close() ;
+            Log.log ( result.error ) ;
+            e.setStatus ( HttpStatus.INTERNAL_SERVER_ERROR, "error", String ( result.error ) ) ;
             res.status ( HttpStatus.INTERNAL_SERVER_ERROR ) ;
             res.set (  'Content-Type', 'application/json' ) ;
             res.send ( e.serialize() ) ;
             return ;
           }
-          else
-          {
-            this.close() ;
-          }
-          if ( ! e.body || typeof e.body !== 'object' || Array.isArray ( e.body ) )
-          {
-            e.body= {} ;
-          }
-          e.body.RESULT = rows ;
+          // console.log ( result ) ;
+          db.commit() ;
           e.setStatus ( 0, "success" ) ;
+          // Log.log ( e ) ;
+          console.log ( e ) ;
+          e.body.RESULT = result ;
           res.set (  'Content-Type', 'application/json' ) ;
           res.status ( HttpStatus.OK ) ;
           e.control.plang = "JavaScript" ;
           res.json ( e ) ;
-// gepard.log ( e ) ;
-        } ) ;
-      });
-  // BAD_REQUEST: 400,
+          // db.disconnect() ;
+          db.close() ;
+        });
+      }
     };
   }) ;
 }) ;
@@ -175,6 +137,7 @@ app.post ( '/login', (req, res) =>
   {
     var body = buf.toString ( 'utf8' ) ;
     var e = gepard.Event.prototype.deserialize ( body ) ;
+    Log.log ( e ) ;
     if ( ! e.body || typeof e.body !== 'object' || Array.isArray ( e.body ) )
     {
       e.body= {} ;
@@ -197,7 +160,7 @@ app.post ( '/login', (req, res) =>
         res.set (  'x-auth-token', token ) ;
         res.status ( HttpStatus.OK ) ;
         res.send ( e.serialize() ) ;
-console.log ( e ) ;
+        Log.log ( e ) ;
       });
     } ) ;
   });
