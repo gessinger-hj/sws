@@ -4,7 +4,7 @@
 * @Author: Hans Jürgen Gessinger
 * @Date:   2016-04-11 23:04:24
 * @Last Modified by:   Hans Jürgen Gessinger
-* @Last Modified time: 2016-04-29 23:59:45
+* @Last Modified time: 2016-05-05 14:28:57
 */
 
 'use strict';
@@ -73,6 +73,7 @@ app.post ( '/', ( req, res) =>
     var body = buf.toString ( 'utf8' ) ;
     var e = gepard.Event.prototype.deserialize ( body ) ;
     var t = req.header ( "x-auth-token" ) ;
+console.log ( req ) ;
     gepard.log ( e ) ;
     {
     // jwt.verify ( t, publicKey, { algorithm: 'RS256' }, ( err, decoded ) => {
@@ -137,7 +138,6 @@ app.post ( '/login', (req, res) =>
   {
     var body = buf.toString ( 'utf8' ) ;
     var e = gepard.Event.prototype.deserialize ( body ) ;
-    Log.log ( e ) ;
     if ( ! e.body || typeof e.body !== 'object' || Array.isArray ( e.body ) )
     {
       e.body= {} ;
@@ -152,6 +152,7 @@ app.post ( '/login', (req, res) =>
         res.status ( HttpStatus.FORBIDDEN ) ;
         res.set (  'Content-Type', 'application/json' ) ;
         res.send ( e.serialize() ) ;
+        Log.logln ( "" + err + " for id=" + u.id ) ;
         return ;
       }
       jwt.sign ( user, privateKey, { algorithm: 'RS256', expiresIn: '2 days'}, token => {
@@ -160,7 +161,7 @@ app.post ( '/login', (req, res) =>
         res.set (  'x-auth-token', token ) ;
         res.status ( HttpStatus.OK ) ;
         res.send ( e.serialize() ) ;
-        Log.log ( e ) ;
+        Log.logln ( "Logged in id=" + u.id ) ;
       });
     } ) ;
   });
@@ -168,5 +169,5 @@ app.post ( '/login', (req, res) =>
 
 var port = 3000 ;
 app.listen ( port, () => {
-  console.log ( "Startet with\n  port=" + port + "\n  log=" + Log._fileName ) ;
+  Log.log ( "Startet with\n  port=" + port + "\n  log=" + Log._fileName + "\n" ) ;
 } ) ;
