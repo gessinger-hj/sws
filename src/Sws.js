@@ -4,7 +4,7 @@
 * @Author: Hans Jürgen Gessinger
 * @Date:   2016-04-11 23:04:24
 * @Last Modified by:   Hans Jürgen Gessinger
-* @Last Modified time: 2016-05-05 14:28:57
+* @Last Modified time: 2016-05-30 12:11:04
 */
 
 'use strict';
@@ -46,6 +46,15 @@ let conf = {
 } ;
 db.setConfig ( conf ) ;
 
+var client = gepard.getClient() ;
+client.onAction ( "reconnect", "recconnect to database", (c,cmd) => {
+  console.log ( cmd ) ;
+  cmd.setResult ( "done") ;
+});
+var tracePoint_HTTP_IN_OUT = client.registerTracePoint ( "HTTP_IN_OUT" ) ;
+var tracePoint_HTTP_ERR = client.registerTracePoint ( "HTTP_ERR" ) ;
+
+client.on ( "DB:REQUEST", e => { console.log ( e ) }) ;
 var express = require('express') ;
 var jwt = require('jsonwebtoken');
 
@@ -73,62 +82,65 @@ app.post ( '/', ( req, res) =>
     var body = buf.toString ( 'utf8' ) ;
     var e = gepard.Event.prototype.deserialize ( body ) ;
     var t = req.header ( "x-auth-token" ) ;
-console.log ( req ) ;
-    gepard.log ( e ) ;
+    tracePoint_HTTP_IN_OUT.log ( e ) ;
+    jwt.verify ( t, publicKey, { algorithm: 'RS256' }, ( err, decoded ) =>
     {
-    // jwt.verify ( t, publicKey, { algorithm: 'RS256' }, ( err, decoded ) => {
-    //   if ( err )
-    //   {
-    //     Log.log ( err ) ;
-    //     e.setStatus ( HttpStatus.FORBIDDEN, "error", String ( err ) ) ;
-    //     res.status ( HttpStatus.FORBIDDEN ) ;
-    //     res.set (  'Content-Type', 'application/json' ) ;
-    //     res.send ( e.serialize() ) ;
-    //     return ;
-    //   }
+      if ( err )
+      {
+        Log.log ( err ) ;
+        tracePoint_HTTP_ERR.log (  ) ; ( err ) ;
+        e.setStatus ( HttpStatus.FORBIDDEN, "error", String ( err ) ) ;
+        res.status ( HttpStatus.FORBIDDEN ) ;
+        res.set (  'Content-Type', 'application/json' ) ;
+        res.send ( e.serialize() ) ;
+        return ;
+      }
       var topic = e.getName() ;
       var u     = e.getUser() ;
       let joe   = new JSAcc ( e.getBody() ) ;
       if ( topic === "DB:REQUEST" )
       {
-        let request = e.getValue ( "REQUEST" ) ;
-        if ( ! request )
-        {
-          let err = "Missing body.request dataset" ;
-          Log.log ( err ) ;
-          e.setStatus ( HttpStatus.BAD_REQUEST, "error", String ( err ) ) ;
-          res.status ( HttpStatus.BAD_REQUEST ) ;
-          res.set (  'Content-Type', 'application/json' ) ;
-          res.send ( e.serialize() ) ;
-          return ;
-        }
-        db.executeRequest ( new DbRequest ( request ), ( result ) => {
-          if ( result.error )
-          {
-            Log.log ( result.error ) ;
-            e.setStatus ( HttpStatus.INTERNAL_SERVER_ERROR, "error", String ( result.error ) ) ;
-            res.status ( HttpStatus.INTERNAL_SERVER_ERROR ) ;
-            res.set (  'Content-Type', 'application/json' ) ;
-            res.send ( e.serialize() ) ;
-            return ;
-          }
-          // console.log ( result ) ;
-          db.commit() ;
-          e.setStatus ( 0, "success" ) ;
-          // Log.log ( e ) ;
-          console.log ( e ) ;
-          e.body.RESULT = result ;
-          res.set (  'Content-Type', 'application/json' ) ;
-          res.status ( HttpStatus.OK ) ;
-          e.control.plang = "JavaScript" ;
-          res.json ( e ) ;
-          // db.disconnect() ;
-          db.close() ;
-        });
+        handleDbRequest ( req, res, e )
       }
-    };
+    }) ;
   }) ;
 }) ;
+let handleDbRequest = function ( req, res, e )
+{
+  let request = e.getValue ( "REQUEST" ) ;
+  if ( ! request )
+  {
+    let err = "Missing body.request dataset" ;
+    Log.log ( err ) ;
+    tracePoint_HTTP_ERR.log (  ) ; ( err )
+    e.setStatus ( HttpStatus.BAD_REQUEST, "error", String ( err ) ) ;
+    res.status ( HttpStatus.BAD_REQUEST ) ;
+    res.set (  'Content-Type', 'application/json' ) ;
+    res.send ( e.serialize() ) ;
+    return ;
+  }
+  db.executeRequest ( new DbRequest ( request ), ( result ) => {
+    if ( result.error )
+    {
+      tracePoint_HTTP_ERR.log ( result.error )
+      Log.log ( result.error ) ;
+      e.setStatus ( HttpStatus.INTERNAL_SERVER_ERROR, "error", String ( result.error ) ) ;
+      res.status ( HttpStatus.INTERNAL_SERVER_ERROR ) ;
+      res.set (  'Content-Type', 'application/json' ) ;
+      res.send ( e.serialize() ) ;
+      return ;
+    }
+    db.commit() ;
+    e.setStatus ( 0, "success" ) ;
+    e.body.RESULT = result ;
+    res.set (  'Content-Type', 'application/json' ) ;
+    res.status ( HttpStatus.OK ) ;
+    e.control.plang = "JavaScript" ;
+    res.json ( e ) ;
+    tracePoint_HTTP_IN_OUT.log ( e )
+    db.close() ;
+  });
+};
 
 app.post ( '/login', (req, res) =>
 {
@@ -138,12 +150,14 @@ app.post ( '/login', (req, res) =>
   {
     var body = buf.toString ( 'utf8' ) ;
     var e = gepard.Event.prototype.deserialize ( body ) ;
+    tracePoint_HTTP_IN_OUT.log ( e ) ;
     if ( ! e.body || typeof e.body !== 'object' || Array.isArray ( e.body ) )
     {
       e.body= {} ;
     }
-
+    client.emit ( e ) ;
     var u = e.getUser() ;
+    tracePoint_HTTP_IN_OUT.log ( u ) ;
     userDB.verifyUser ( u, ( err, user ) => {
       u._pwd = '' ;
       if ( err )
@@ -152,6 +166,7 @@ app.post ( '/login', (req, res) =>
         res.status ( HttpStatus.FORBIDDEN ) ;
         res.set (  'Content-Type', 'application/json' ) ;
         res.send ( e.serialize() ) ;
+        tracePoint_HTTP_ERR.log ( e ) ;
         Log.logln ( "" + err + " for id=" + u.id ) ;
         return ;
       }
@@ -161,6 +176,8 @@ app.post ( '/login', (req, res) =>
         res.set (  'x-auth-token', token ) ;
         res.status ( HttpStatus.OK ) ;
         res.send ( e.serialize() ) ;
+        tracePoint_HTTP_IN_OUT.log ( e ) ;
+        tracePoint_HTTP_IN_OUT.log ( e.getUser() ) ;
         Log.logln ( "Logged in id=" + u.id ) ;
       });
     } ) ;
