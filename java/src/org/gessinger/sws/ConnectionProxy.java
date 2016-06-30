@@ -1,8 +1,8 @@
 /*
 * @Author: Hans Jürgen Gessinger
 * @Date:   2016-04-11 23:10:06
-* @Last Modified by:   Hans Jürgen Gessinger
-* @Last Modified time: 2016-04-30 00:17:29
+* @Last Modified by:   gess
+* @Last Modified time: 2016-06-30 23:24:10
 */
 
 package org.gessinger.sws ;
@@ -86,15 +86,21 @@ public class ConnectionProxy
     {
       ConnectionProxy cp = new ConnectionProxy ( "http://roma:3000" ) ;
       Event e = cp.login ( uid, pwd ) ;
-      System.out.println(e);
+System.out.println(e);
+      DbRequest req = new DbRequest() ;
+      req.addSelect ( "t_inventory", null, null ) ;
+System.out.println ( req ) ;
+
       Event e_request_select_inventory = new Event ( "DB:REQUEST" ) ;
-      e_request_select_inventory.putValue ( "REQUEST/action", "select" ) ;
-      e_request_select_inventory.putValue ( "REQUEST/table", "t_inventory" ) ;
-      e_request_select_inventory.putValue ( "REQUEST/columns", new String[] { "*" } ) ;
+      e_request_select_inventory.putValue ( "REQUEST", req.getMap() ) ;
+System.out.println ( e_request_select_inventory );
+//       e_request_select_inventory.putValue ( "REQUEST/action", "select" ) ;
+//       e_request_select_inventory.putValue ( "REQUEST/table", "t_inventory" ) ;
+//       e_request_select_inventory.putValue ( "REQUEST/columns", new String[] { "*" } ) ;
       Event e_result_select_inventory = cp.post ( e_request_select_inventory ) ;
 System.out.println ( e_result_select_inventory );
-      ArrayList<Map<String,Object>> rows = (ArrayList<Map<String,Object>>) e_result_select_inventory.getValue ( "RESULT/result" ) ;
-      System.out.println (  Util.toString ( rows ) ) ;
+//       ArrayList<Map<String,Object>> rows = (ArrayList<Map<String,Object>>) e_result_select_inventory.getValue ( "RESULT/result" ) ;
+//       System.out.println (  Util.toString ( rows ) ) ;
     }
     catch ( Throwable exc )
     {
