@@ -4,7 +4,7 @@
 * @Author: Hans Jürgen Gessinger
 * @Date:   2016-04-11 23:04:24
 * @Last Modified by:   Hans Jürgen Gessinger
-* @Last Modified time: 2016-05-30 12:11:04
+* @Last Modified time: 2016-06-30 23:22:33
 */
 
 'use strict';
@@ -51,7 +51,8 @@ client.onAction ( "reconnect", "recconnect to database", (c,cmd) => {
   console.log ( cmd ) ;
   cmd.setResult ( "done") ;
 });
-var tracePoint_HTTP_IN_OUT = client.registerTracePoint ( "HTTP_IN_OUT" ) ;
+var tracePoint_HTTP_IN = client.registerTracePoint ( "HTTP_IN" ) ;
+var tracePoint_HTTP_OUT = client.registerTracePoint ( "HTTP_OUT" ) ;
 var tracePoint_HTTP_ERR = client.registerTracePoint ( "HTTP_ERR" ) ;
 
 client.on ( "DB:REQUEST", e => { console.log ( e ) }) ;
@@ -82,7 +83,7 @@ app.post ( '/', ( req, res) =>
     var body = buf.toString ( 'utf8' ) ;
     var e = gepard.Event.prototype.deserialize ( body ) ;
     var t = req.header ( "x-auth-token" ) ;
-    tracePoint_HTTP_IN_OUT.log ( e ) ;
+    tracePoint_HTTP_IN.log ( e ) ;
     jwt.verify ( t, publicKey, { algorithm: 'RS256' }, ( err, decoded ) =>
     {
       if ( err )
@@ -128,6 +129,7 @@ let handleDbRequest = function ( req, res, e )
       res.status ( HttpStatus.INTERNAL_SERVER_ERROR ) ;
       res.set (  'Content-Type', 'application/json' ) ;
       res.send ( e.serialize() ) ;
+      db.rollback() ;
       return ;
     }
     db.commit() ;
@@ -137,7 +139,7 @@ let handleDbRequest = function ( req, res, e )
     res.status ( HttpStatus.OK ) ;
     e.control.plang = "JavaScript" ;
     res.json ( e ) ;
-    tracePoint_HTTP_IN_OUT.log ( e )
+    tracePoint_HTTP_OUT.log ( e )
     db.close() ;
   });
 };
@@ -150,14 +152,14 @@ app.post ( '/login', (req, res) =>
   {
     var body = buf.toString ( 'utf8' ) ;
     var e = gepard.Event.prototype.deserialize ( body ) ;
-    tracePoint_HTTP_IN_OUT.log ( e ) ;
+    tracePoint_HTTP_IN.log ( e ) ;
     if ( ! e.body || typeof e.body !== 'object' || Array.isArray ( e.body ) )
     {
       e.body= {} ;
     }
     client.emit ( e ) ;
     var u = e.getUser() ;
-    tracePoint_HTTP_IN_OUT.log ( u ) ;
+    tracePoint_HTTP_OUT.log ( u ) ;
     userDB.verifyUser ( u, ( err, user ) => {
       u._pwd = '' ;
       if ( err )
@@ -176,8 +178,8 @@ app.post ( '/login', (req, res) =>
         res.set (  'x-auth-token', token ) ;
         res.status ( HttpStatus.OK ) ;
         res.send ( e.serialize() ) ;
-        tracePoint_HTTP_IN_OUT.log ( e ) ;
-        tracePoint_HTTP_IN_OUT.log ( e.getUser() ) ;
+        tracePoint_HTTP_OUT.log ( e ) ;
+        tracePoint_HTTP_OUT.log ( e.getUser() ) ;
         Log.logln ( "Logged in id=" + u.id ) ;
       });
     } ) ;
