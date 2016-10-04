@@ -2,7 +2,7 @@
 * @Author: Hans Jürgen Gessinger
 * @Date:   2016-04-11 23:10:06
 * @Last Modified by:   gess
-* @Last Modified time: 2016-06-30 23:24:10
+* @Last Modified time: 2016-07-09 14:19:59
 */
 
 package org.gessinger.sws ;
@@ -86,21 +86,34 @@ public class ConnectionProxy
     {
       ConnectionProxy cp = new ConnectionProxy ( "http://roma:3000" ) ;
       Event e = cp.login ( uid, pwd ) ;
-System.out.println(e);
+
       DbRequest req = new DbRequest() ;
-      req.addSelect ( "t_inventory", null, null ) ;
+      String mode = Util.getProperty ( "mode", "s" ) ;
+      if ( mode.indexOf ( 's' ) == 0 )
+      {
+        req.addSelect ( "t_inventory", null, "inventory_key=?", new String[] { "3" } ) ;
+      }
+      if ( mode.indexOf ( 'u' ) >= 0 )
+      {
+        JSAcc joe = new JSAcc() ;
+        joe.add ( "miscellaneous", new Date().toString() ) ;
+        req.addUpdate ( "t_inventory", joe.map(), "inventory_key=3" ) ;
+      }
+      if ( mode.indexOf ( 's', 1 ) >= 0 )
+      {
+        req.addSelect ( "t_inventory", null, "inventory_key=?", new String[] { "3" } ) ;
+      }
 System.out.println ( req ) ;
 
-      Event e_request_select_inventory = new Event ( "DB:REQUEST" ) ;
-      e_request_select_inventory.putValue ( "REQUEST", req.getMap() ) ;
-System.out.println ( e_request_select_inventory );
-//       e_request_select_inventory.putValue ( "REQUEST/action", "select" ) ;
-//       e_request_select_inventory.putValue ( "REQUEST/table", "t_inventory" ) ;
-//       e_request_select_inventory.putValue ( "REQUEST/columns", new String[] { "*" } ) ;
-      Event e_result_select_inventory = cp.post ( e_request_select_inventory ) ;
-System.out.println ( e_result_select_inventory );
-//       ArrayList<Map<String,Object>> rows = (ArrayList<Map<String,Object>>) e_result_select_inventory.getValue ( "RESULT/result" ) ;
-//       System.out.println (  Util.toString ( rows ) ) ;
+      Event e_req = new Event ( "DB:REQUEST" ) ;
+      e_req.putValue ( "REQUEST", req.getMap() ) ;
+System.out.println ( e_req );
+      Event e_res = cp.post ( e_req ) ;
+System.out.println ( e_res );
+      DbResult res = new DbResult ( e_res ) ;
+      // List<Map<String,Object>> rows = res.getRows ( 1 ) ; //"t_inventory" ) ;
+      List<Map<String,Object>> rows = res.getRows ( "t_inventory" ) ;
+      System.out.println (  Util.toString ( rows ) ) ;
     }
     catch ( Throwable exc )
     {
