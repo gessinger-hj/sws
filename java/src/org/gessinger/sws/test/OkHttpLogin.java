@@ -1,8 +1,8 @@
 /*
 * @Author: Hans Jürgen Gessinger
 * @Date:   2016-04-11 23:10:06
-* @Last Modified by:   Hans Jürgen Gessinger
-* @Last Modified time: 2016-04-20 22:56:32
+* @Last Modified by:   gess
+* @Last Modified time: 2017-05-09 22:22:30
 */
 
 package org.gessinger.sws.test ;
@@ -37,23 +37,19 @@ public class OkHttpLogin
     return response.body().string();
   }
 
-  String bowlingJson(String player1, String player2)
-  throws Exception
-  {
-    Event e = new Event ( "login" ) ;
-    User u = new User ( "Miller", -1, "654321" ) ;
-    e.setUser ( u ) ;
-    System.out.println ( e ) ;
-    String json = e.toJSON() ;
-    return json ;
-  }
-
   public static void main(String[] args) throws Exception {
     OkHttpLogin example = new OkHttpLogin();
-    String json = example.bowlingJson("Jesse", "Jake");
-    String response = example.post( "http://roma:3000/login", json );
-    Event e = Event.fromJSON ( response ) ;
-    System.out.println(e);
+    Event eRequest = new Event ( "login" ) ;
+    User u = new User ( "Miller", -1, "654321" ) ;
+    eRequest.setUser ( u ) ;
+    System.out.println ( "--------------------- Request -------------------" ) ;
+    System.out.println ( eRequest ) ;
+    String json = eRequest.toJSON() ;
+    String url = Util.getProperty ( "url", "http:/roma:3000" ) + "/login" ;
+    String response = example.post( url, json );
+    Event eResponse = Event.fromJSON ( response ) ;
+    System.out.println ( "--------------------- Result -------------------" ) ;
+    System.out.println(eResponse);
     System.out.println(example.jwt);
   }
 }

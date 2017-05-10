@@ -1,11 +1,14 @@
 /*
 * @Author: Hans Jürgen Gessinger
 * @Date:   2016-04-11 23:10:06
-* @Last Modified by:   Hans Jürgen Gessinger
-* @Last Modified time: 2016-04-13 23:23:11
+* @Last Modified by:   gess
+* @Last Modified time: 2017-05-09 18:57:17
 */
 
 package org.gessinger.sws.test ;
+
+import org.gessinger.gepard.* ;
+import org.gessinger.nutil.* ;
 
 import java.io.IOException;
 import okhttp3.MediaType;
@@ -51,8 +54,8 @@ public class OkHttpPost
   public static void main(String[] args) throws IOException {
     OkHttpPost example = new OkHttpPost();
     String json = example.bowlingJson("Jesse", "Jake");
-    // String response = example.post("http://www.roundsapp.com/post", json);
-    String response = example.post( "http://localhost:3000", json );
+    String url = Util.getProperty ( "url", "http://roma:3000" ) ;
+    String response = example.post( url, json );
     System.out.println(response);
   }
 }
