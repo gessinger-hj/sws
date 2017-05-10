@@ -4,7 +4,7 @@
 * @Author: Hans Jürgen Gessinger
 * @Date:   2016-04-11 23:04:24
 * @Last Modified by:   Hans Jürgen Gessinger
-* @Last Modified time: 2016-06-30 23:22:33
+* @Last Modified time: 2017-05-09 22:22:49
 */
 
 'use strict';
@@ -26,7 +26,7 @@ var privateKey = fs.readFileSync ( privateKeyFileName ) ;
 var publicKey = fs.readFileSync ( publicKeyFileName ) ;
 
 
-var dburl = gepard.getProperty ( "dburl", "mysql://root:luap1997@localhost/inventum" ) ;
+var dburl = gepard.getProperty ( "inventum.url" ) ;
 var userDB = new sidds.UserDB ( dburl ) ;
 var db = new sidds.Database ( dburl ) ;
 let conf = {
@@ -135,10 +135,11 @@ let handleDbRequest = function ( req, res, e )
     db.commit() ;
     e.setStatus ( 0, "success" ) ;
     e.body.RESULT = result ;
-    res.set (  'Content-Type', 'application/json' ) ;
     res.status ( HttpStatus.OK ) ;
+    res.set (  'Content-Type', 'application/json' ) ;
     e.control.plang = "JavaScript" ;
-    res.json ( e ) ;
+    res.send ( e.serialize() ) ;
+    // res.json ( e ) ;
     tracePoint_HTTP_OUT.log ( e )
     db.close() ;
   });
