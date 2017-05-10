@@ -2,7 +2,7 @@
 * @Author: Hans Jürgen Gessinger
 * @Date:   2016-04-11 22:48:54
 * @Last Modified by:   gess
-* @Last Modified time: 2017-05-09 18:52:00
+* Last Modified time: 2017-05-10 16:25:51
 */
 package org.gessinger.sws.test ;
 
@@ -34,7 +34,7 @@ public class OkHttpGet
   throws IOException
   {
     OkHttpGet example = new OkHttpGet();
-    String url = Util.getProperty ( "url", "http:/roma:3000" ) ;
+    String url = Util.getProperty ( "url", "http:/roma:3000" ) ;c
     String response = example.run( url );
     System.out.println(response);
   }
