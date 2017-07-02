@@ -2,7 +2,7 @@
 * @Author: Hans Jürgen Gessinger
 * @Date:   2016-04-11 23:10:06
 * @Last Modified by:   gess
-* @Last Modified time: 2017-05-09 18:57:17
+* @Last Modified time: 2017-05-12 18:55:46
 */
 
 package org.gessinger.sws.test ;
@@ -54,7 +54,7 @@ public class OkHttpPost
   public static void main(String[] args) throws IOException {
     OkHttpPost example = new OkHttpPost();
     String json = example.bowlingJson("Jesse", "Jake");
-    String url = Util.getProperty ( "url", "http://roma:3000" ) ;
+    String url = Util.getProperty ( "url", "http://localhost:3000" ) ;
     String response = example.post( url, json );
     System.out.println(response);
   }

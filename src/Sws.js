@@ -3,8 +3,8 @@
 /*
 * @Author: Hans Jürgen Gessinger
 * @Date:   2016-04-11 23:04:24
-* @Last Modified by:   Hans Jürgen Gessinger
-* @Last Modified time: 2017-05-09 22:22:49
+* @Last Modified by:   gess
+* Last Modified time: 2017-05-09 22:22:49
 */
 
 'use strict';
@@ -56,6 +56,7 @@ var tracePoint_HTTP_OUT = client.registerTracePoint ( "HTTP_OUT" ) ;
 var tracePoint_HTTP_ERR = client.registerTracePoint ( "HTTP_ERR" ) ;
 
 client.on ( "DB:REQUEST", e => { console.log ( e ) }) ;
+
 var express = require('express') ;
 var jwt = require('jsonwebtoken');
 
@@ -89,7 +90,7 @@ app.post ( '/', ( req, res) =>
       if ( err )
       {
         Log.log ( err ) ;
-        tracePoint_HTTP_ERR.log (  ) ; ( err ) ;
+        tracePoint_HTTP_ERR.log ( err ) ;
         e.setStatus ( HttpStatus.FORBIDDEN, "error", String ( err ) ) ;
         res.status ( HttpStatus.FORBIDDEN ) ;
         res.set (  'Content-Type', 'application/json' ) ;
@@ -139,8 +140,7 @@ let handleDbRequest = function ( req, res, e )
     res.set (  'Content-Type', 'application/json' ) ;
     e.control.plang = "JavaScript" ;
     res.send ( e.serialize() ) ;
-    // res.json ( e ) ;
-    tracePoint_HTTP_OUT.log ( e )
+    // tracePoint_HTTP_OUT.log ( e ) ;
     db.close() ;
   });
 };
@@ -158,7 +158,6 @@ app.post ( '/login', (req, res) =>
     {
       e.body= {} ;
     }
-    client.emit ( e ) ;
     var u = e.getUser() ;
     tracePoint_HTTP_OUT.log ( u ) ;
     userDB.verifyUser ( u, ( err, user ) => {

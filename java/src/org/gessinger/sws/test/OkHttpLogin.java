@@ -2,7 +2,7 @@
 * @Author: Hans Jürgen Gessinger
 * @Date:   2016-04-11 23:10:06
 * @Last Modified by:   gess
-* @Last Modified time: 2017-05-09 22:22:30
+* @Last Modified time: 2017-05-12 18:55:59
 */
 
 package org.gessinger.sws.test ;
@@ -45,7 +45,7 @@ public class OkHttpLogin
     System.out.println ( "--------------------- Request -------------------" ) ;
     System.out.println ( eRequest ) ;
     String json = eRequest.toJSON() ;
-    String url = Util.getProperty ( "url", "http:/roma:3000" ) + "/login" ;
+    String url = Util.getProperty ( "url", "http:/localhost:3000" ) + "/login" ;
     String response = example.post( url, json );
     Event eResponse = Event.fromJSON ( response ) ;
     System.out.println ( "--------------------- Result -------------------" ) ;

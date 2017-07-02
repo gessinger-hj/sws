@@ -34,7 +34,7 @@ public class OkHttpGet
   throws IOException
   {
     OkHttpGet example = new OkHttpGet();
-    String url = Util.getProperty ( "url", "http:/roma:3000" ) ;c
+    String url = Util.getProperty ( "url", "http:/localhost:3000" ) ;
     String response = example.run( url );
     System.out.println(response);
   }
